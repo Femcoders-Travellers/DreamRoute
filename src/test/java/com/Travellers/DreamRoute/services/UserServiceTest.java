@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,7 +30,6 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.result.StatusResultMatchersExtensionsKt.isEqualTo;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserService Unit Tests")
@@ -177,8 +177,25 @@ public class UserServiceTest {
                 userService.deleteUser(userIdToDelete, userDetailTest);
             });
 
-            assertThat(thrown.getMessage()).contains("Only administrators can delete users");
+            assertThat(thrown.getMessage()).contains("You don't have permission to delete a user");
         }
+
+        @Test
+        @DisplayName("should allow non-admin user to delete their own account")
+        void shouldAllowUserToDeleteTheirOwnAccount() {
+            Long userIdToDelete = testUser.getId(); // User to delete is testUser (non-admin)
+            UserDetail userDetailTest = new UserDetail(testUser); // UserDetail is also for testUser (non-admin)
+
+            given(userRepository.findById(userIdToDelete)).willReturn(Optional.of(testUser));
+            Mockito.doNothing().when(userRepository).delete(testUser); // Explicitly mock void method
+
+            String result = userService.deleteUser(userIdToDelete, userDetailTest);
+
+            assertThat(result).isEqualTo("User with id " + userIdToDelete + " has been deleted");
+            Mockito.verify(userRepository).delete(testUser); // Verify delete was called
+        }
+
+
 
         @Test
         @DisplayName("should throw EntityNotFoundException when admin attempts to delete non-existent user")

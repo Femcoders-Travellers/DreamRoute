@@ -141,8 +141,8 @@ public class UserService implements UserDetailsService {
     public String deleteUser(Long id, UserDetail userDetail) {
         boolean isAdmin = userDetail.getAuthorities().stream()
                 .anyMatch(auth -> auth.getAuthority().equals("ROLE_ADMIN"));
-        if (!isAdmin){
-            throw new AccessDeniedException("Only administrators can delete users");
+        if (!isAdmin && !userDetail.getId().equals(id)){
+            throw new AccessDeniedException("You don't have permission to delete a user");
         }
         User userToDelete = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(User.class.getSimpleName(), id));
