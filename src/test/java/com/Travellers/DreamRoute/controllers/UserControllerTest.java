@@ -184,11 +184,11 @@ public class UserControllerTest {
                 String expectedMessage = "User with id " + userIdToDelete + " has been deleted";
 
                 User adminUser = new User();
-                adminUser.setId(1L); // May's ID
+                adminUser.setId(1L);
                 adminUser.setUsername("May");
                 adminUser.setPassword("dummyPassword");
 
-                Role adminRole = new Role(2L, "ROLE_ADMIN", null); // Ensure ID and name match your test-data.sql
+                Role adminRole = new Role(2L, "ROLE_ADMIN", null);
                 adminUser.setRoles(List.of(adminRole));
 
                 UserDetail testAdmin = new UserDetail(adminUser);
@@ -200,26 +200,26 @@ public class UserControllerTest {
                         .andExpect(content().string(expectedMessage));
             }
 
+
             @Test
-            @DisplayName("should return 403 forbidden when normal user tries to delete a user")
-            void shouldReturnForbiddenWhenNormalUserDeletesUser() throws Exception {
-                Long userIdToDelete = 3L; //
+            @DisplayName("should return 403 forbidden when non-admin user tries to delete another user")
+            void shouldReturnForbiddenWhenNormalUserTriesToDeleteUser() throws Exception {
+                Long userIdToDelete = 3L;
+                String expectedMessage = "You don't have permission to delete a user";
 
                 User normalUser = new User();
-                normalUser.setId(2L); // Deb's ID
+                normalUser.setId(2L);
                 normalUser.setUsername("Deb");
                 normalUser.setPassword("dummyPassword");
-
-                Role userRole = new Role(1L, "ROLE_USER", null); // ID 1 is ROLE_USER in test-data.sql
+                Role userRole = new Role(1L, "ROLE_USER", null);
                 normalUser.setRoles(List.of(userRole));
-
-                UserDetail testNormalUser = new UserDetail(normalUser); // Represents Deb, the normal user
+                UserDetail testUser = new UserDetail(normalUser);
 
                 mockMvc.perform(delete("/users/delete/{id}", userIdToDelete)
-                                .with(user(testNormalUser)) // Simulate normal user
+                                .with(user(testUser))
                                 .contentType(MediaType.APPLICATION_JSON))
-                        .andExpect(status().isForbidden()) // Expect 403 Forbidden
-                        .andExpect(jsonPath("$.message").value("Only administrators can delete users")); // Verify message
+                        .andExpect(status().isForbidden())
+                        .andExpect(jsonPath("$.message").value(expectedMessage));
             }
 
             @Test
@@ -228,23 +228,19 @@ public class UserControllerTest {
                 Long nonExistentUserId = 999L;
 
                 User adminUser = new User();
-                adminUser.setId(1L); // May's ID
+                adminUser.setId(1L);
                 adminUser.setUsername("May");
                 adminUser.setPassword("dummyPassword");
-
                 Role adminRole = new Role(2L, "ROLE_ADMIN", null);
                 adminUser.setRoles(List.of(adminRole));
 
                 UserDetail testAdmin = new UserDetail(adminUser);
 
                 mockMvc.perform(delete("/users/delete/{id}", nonExistentUserId)
-                                .with(user(testAdmin)) // Simulate admin user
+                                .with(user(testAdmin))
                                 .contentType(MediaType.APPLICATION_JSON))
-                        .andExpect(status().isNotFound()) // Expect 404 Not Found
+                        .andExpect(status().isNotFound())
                         .andExpect(jsonPath("$.message").value("User not found with id " + nonExistentUserId));
             }
         }
-
-
-
 }

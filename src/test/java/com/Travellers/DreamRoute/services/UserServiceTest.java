@@ -183,16 +183,16 @@ public class UserServiceTest {
         @Test
         @DisplayName("should allow non-admin user to delete their own account")
         void shouldAllowUserToDeleteTheirOwnAccount() {
-            Long userIdToDelete = testUser.getId(); // User to delete is testUser (non-admin)
-            UserDetail userDetailTest = new UserDetail(testUser); // UserDetail is also for testUser (non-admin)
+            Long userIdToDelete = testUser.getId();
+            UserDetail userDetailTest = new UserDetail(testUser);
 
             given(userRepository.findById(userIdToDelete)).willReturn(Optional.of(testUser));
-            Mockito.doNothing().when(userRepository).delete(testUser); // Explicitly mock void method
+            Mockito.doNothing().when(userRepository).delete(testUser);
 
             String result = userService.deleteUser(userIdToDelete, userDetailTest);
 
             assertThat(result).isEqualTo("User with id " + userIdToDelete + " has been deleted");
-            Mockito.verify(userRepository).delete(testUser); // Verify delete was called
+            Mockito.verify(userRepository).delete(testUser);
         }
 
 
