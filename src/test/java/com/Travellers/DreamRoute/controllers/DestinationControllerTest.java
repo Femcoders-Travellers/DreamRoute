@@ -113,6 +113,42 @@ public class DestinationControllerTest {
     }
 
     @Nested
+    @DisplayName("GET /destinations/filter")
+    class FilterDestinationsTests {
+
+        @Test
+        @DisplayName("Should return destinations filtered by city and/or country")
+        void filterDestinations_returnsFilteredResults() throws Exception {
+            mockMvc.perform(get("/destinations/filter")
+                            .param("city", "tokio")
+                            .param("country", "japón")
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$", not(empty())));
+        }
+
+        @Test
+        @DisplayName("Should return all destinations when no filter is applied")
+        void filterDestinations_returnsAll_whenNoFilter() throws Exception {
+            mockMvc.perform(get("/destinations/filter")
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(10)));
+        }
+
+        @Test
+        @DisplayName("Should return empty list when filter has no matches")
+        void filterDestinations_returnsEmpty_whenNoMatch() throws Exception {
+            mockMvc.perform(get("/destinations/filter")
+                            .param("city", "noexiste")
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", empty()));
+        }
+    }
+
+    @Nested
     @DisplayName("GET /destinations/{id}")
     class GetDestinationByIdTests {
         private final Long EXISTING_DESTINATION_ID = 1L;

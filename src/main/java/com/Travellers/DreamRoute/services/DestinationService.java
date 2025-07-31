@@ -18,6 +18,7 @@ import org.springframework.security.access.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import jakarta.persistence.criteria.Predicate;
 
 @Service
 @RequiredArgsConstructor
@@ -72,6 +73,22 @@ public class DestinationService {
         finalOrderedList.addAll(otherUsersDestinations);
 
         return finalOrderedList;
+    }
+
+    public List<DestinationResponse> getFilteredDestination(String city, String country) {
+        List<Destination> destinations = destinationRepository.findAll(
+                (root, query, cb) -> {
+                    List<Predicate> predicates = new ArrayList<>();
+                    if (city != null && !city.isBlank()) {
+                        predicates.add(cb.like(cb.lower(root.get("city")), "%" + city.toLowerCase() + "%"));
+                    }
+                    if (country != null && !country.isBlank()) {
+                        predicates.add(cb.like(cb.lower(root.get("country")), "%" + country.toLowerCase() + "%"));
+                    }
+
+                    return cb.and(predicates.toArray(new Predicate[0]));
+                });
+        return destinations.stream().map(destinationMapperImpl::entityToDto).toList();
     }
 
     public DestinationResponse getDestinationById(Long id) {

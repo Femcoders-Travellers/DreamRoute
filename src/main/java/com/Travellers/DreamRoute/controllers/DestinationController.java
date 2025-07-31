@@ -37,6 +37,16 @@ public class DestinationController {
         return ResponseEntity.ok(destinations);
     }
 
+    @GetMapping("/filter")
+    public ResponseEntity<List<DestinationResponse>> filterDestinations(
+            @RequestParam(required = false) String city,
+            @RequestParam(required = false) String country
+    ) {
+        return ResponseEntity.ok(
+                destinationService.getFilteredDestination(city, country)
+        );
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<DestinationResponse> addDestination(@RequestBody @Valid DestinationRequest request, @AuthenticationPrincipal UserDetail userDetail){

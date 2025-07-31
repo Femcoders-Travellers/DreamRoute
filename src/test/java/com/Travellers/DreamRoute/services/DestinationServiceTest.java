@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.never;
@@ -94,6 +95,68 @@ public class DestinationServiceTest {
             assertThat(result).hasSize(2);
             assertThat(result).containsExactly(testDestinationResponse1, testDestinationResponse2);
             verify(destinationRepository).findAll();
+        }
+    }
+
+    @Nested
+    @DisplayName("getFilteredDestination(String city, String country)")
+    class GetFilteredDestinationTests {
+
+        private User testUser;
+        private Destination dest1, dest2;
+        private DestinationResponse dto1, dto2;
+
+        @BeforeEach
+        void setup() {
+            testUser = User.builder()
+                    .id(1L)
+                    .username("testuser")
+                    .password("pass")
+                    .roles(Collections.singletonList(createRole("ROLE_USER")))
+                    .build();
+
+            dest1 = new Destination(1L, "Japón", "Tokio", "Desc", "img", testUser);
+            dest2 = new Destination(2L, "Colombia", "Cartagena", "Desc", "img", testUser);
+
+            dto1 = new DestinationResponse(1L, "Japón", "Tokio", "Desc", "img", "testuser");
+            dto2 = new DestinationResponse(2L, "Colombia", "Cartagena", "Desc", "img", "testuser");
+        }
+
+        @Test
+        @DisplayName("Should return all destinations when no filters are provided")
+        void returnsAllDestinations_whenNoFilters() {
+            given(destinationMapperImpl.entityToDto(dest1)).willReturn(dto1);
+            given(destinationMapperImpl.entityToDto(dest2)).willReturn(dto2);
+            given(destinationRepository.findAll(ArgumentMatchers.<Specification<Destination>>any())).willReturn(List.of(dest1, dest2));
+            List<DestinationResponse> result = destinationService.getFilteredDestination(null, null);
+            assertThat(result).containsExactly(dto1, dto2);
+        }
+
+        @Test
+        @DisplayName("Should return destinations filtered by city only")
+        void returnsDestinations_whenFilteredByCity() {
+            given(destinationMapperImpl.entityToDto(dest1)).willReturn(dto1);
+            given(destinationRepository.findAll(ArgumentMatchers.<Specification<Destination>>any())).willReturn(List.of(dest1));
+            List<DestinationResponse> result = destinationService.getFilteredDestination("tokio", null);
+            assertThat(result).containsExactly(dto1);
+        }
+
+        @Test
+        @DisplayName("Should return destinations filtered by country only")
+        void returnsDestinations_whenFilteredByCountry() {
+            given(destinationMapperImpl.entityToDto(dest2)).willReturn(dto2);
+            given(destinationRepository.findAll(ArgumentMatchers.<Specification<Destination>>any())).willReturn(List.of(dest2));
+            List<DestinationResponse> result = destinationService.getFilteredDestination(null, "colombia");
+            assertThat(result).containsExactly(dto2);
+        }
+
+        @Test
+        @DisplayName("Should return destinations filtered by city and country")
+        void returnsDestinations_whenFilteredByCityAndCountry() {
+            given(destinationMapperImpl.entityToDto(dest1)).willReturn(dto1);
+            given(destinationRepository.findAll(ArgumentMatchers.<Specification<Destination>>any())).willReturn(List.of(dest1));
+            List<DestinationResponse> result = destinationService.getFilteredDestination("tokio", "japón");
+            assertThat(result).containsExactly(dto1);
         }
     }
 
